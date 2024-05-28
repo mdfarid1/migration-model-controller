@@ -1,0 +1,139 @@
+<?php
+
+namespace {{ namespace }};
+
+
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\View;
+use {{ namespacedModel }};
+use {{ rootNamespace }}Http\Controllers\Controller;
+use {{ namespacedRequests }}
+use Carbon\Carbon;
+
+class {{ class }} extends Controller
+{
+    protected function view($fileName)
+    {
+        return 'default.panel.{{ modelVariable }}.'. $fileName;
+    }
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(Request $request)
+    {
+       ${{ modelVariable }}s = {{ model }}::query();
+
+        if($request->search)
+            ${{ modelVariable }}s->where('search', $request->search);
+
+        ${{ modelVariable }}s = ${{ modelVariable }}s->latest()->paginate(20);
+
+        View::share('title', '{{ model }} list');
+        return view($this->view('list'), compact('{{ modelVariable }}s'));
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        View::share('title', 'Add new {{ modelVariable }}');
+        return view($this->view('form'));
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store({{ storeRequest }} $request)
+    {
+        $request->validate([
+            //'title' => 'required|string'
+        ]);
+
+        $data['active'] = $request->active;
+
+        try {
+            ${{ modelVariable }} = {{ model }}::create($data);
+        } catch (\PDOException $e) {
+            if (config('app.debug'))
+                dd($e->getMessage());
+            Log::error($e);
+            return back()->withInput()->withErrors('{{ model }} information failed to store');
+        }
+
+        return redirect()->route('panel.{{ modelVariable }}.index')->with('success', '{{ model }} successfully add');
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show($code)
+    {
+        ${{ modelVariable }} = {{ model }}::firstWhere('code', $code);
+        if(!${{ modelVariable }})
+            return back()->withErrors('{{ model }} not found to show. Try again');
+        View::share('title', 'Add new {{ modelVariable }}');
+        return view($this->view('show'), compact('{{ modelVariable }}'));
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit($code)
+    {
+        ${{ modelVariable }} = {{ model }}::firstWhere('code', $code);
+        if(!${{ modelVariable }})
+            return back()->withErrors('{{ model }} not found to edit. Try again');
+        View::share('title', 'Edit {{ modelVariable }}');
+        return view($this->view('form'), compact('{{ modelVariable }}'));
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update({{ updateRequest }} $request, $code)
+    {
+        ${{ modelVariable }} = {{ model }}::firstWhere('code', $code);
+        if(!${{ modelVariable }})
+            return back()->withErrors('{{ model }} not found to edit. Try again');
+
+        $request->validate([
+            //'title' => 'required|string'
+        ]);
+
+        $data['active'] = $request->active;
+
+        try {
+            ${{ modelVariable }}->update($data);
+        } catch (\PDOException $e) {
+            if (config('app.debug'))
+                dd($e->getMessage());
+            Log::error($e);
+            return back()->withInput()->withErrors('{{ model }} information failed to update');
+        }
+
+        return redirect()->route('panel.{{ modelVariable }}.index')->with('success', '{{ model }} successfully updated');
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy($code)
+    {
+        ${{ modelVariable }} = {{ model }}::firstWhere('code', $code);
+        if(!${{ modelVariable }})
+            return back()->withErrors('{{ model }} not found to edit. Try again');
+
+        try {
+            ${{ modelVariable }}->delete();
+        } catch (\PDOException $e) {
+            if (config('app.debug'))
+                dd($e->getMessage());
+            Log::error($e);
+            return back()->withInput()->withErrors('{{ model }} information failed to remove');
+        }
+
+        return redirect()->route('panel.{{ modelVariable }}.index')->with('success', '{{ model }} successfully deleted');
+    }
+}
